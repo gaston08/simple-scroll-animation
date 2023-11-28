@@ -58,8 +58,8 @@ let renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(innerWidth, innerHeight);
 document.body.appendChild(renderer.domElement);
 
-let controls = new OrbitControls(camera, renderer.domElement);
-controls.enableDamping = true;
+// let controls = new OrbitControls(camera, renderer.domElement);
+// controls.enableDamping = true;
 
 let light = new THREE.DirectionalLight(0xffffff, 0.5);
 light.position.setScalar(1);
@@ -79,11 +79,11 @@ let samplerSphere = new MeshSurfaceSampler(new THREE.Mesh(new THREE.SphereGeomet
 let samplerBox = new MeshSurfaceSampler(new THREE.Mesh(new THREE.BoxGeometry(2, 2, 2))).build();
 let samplerTorusKnot = new MeshSurfaceSampler(new THREE.Mesh(new THREE.TorusKnotGeometry(0.5, 0.2))).build();
 
-let MAX_COUNT = 10000;
+let MAX_COUNT = 30000;
 instancedMesh = new THREE.InstancedMesh(
   new THREE.BoxGeometry(0.01, 0.01, 0.01),
   new THREE.MeshStandardMaterial({
-    color: 0xff88cc,
+    color: 0xffffff,
   }), MAX_COUNT);
 
 let v = new THREE.Vector3();
@@ -135,9 +135,14 @@ function getMeshWithGeometryFromModel(model) {
   console.log(model)
   if (model.geometry) {
     console.log("2")
-    return model;
+    return model.children[0];
   } else {
-    const geometries = model.children.map(m => m.geometry);
+    const geometries = [];
+    model.traverse(function(child) {
+      if (child.isMesh) {
+        geometries.push(child.geometry);
+      }
+    });
     const geometry = BufferGeometryUtils.mergeGeometries(geometries);
 
     const material = new THREE.MeshBasicMaterial({ color: 0xffff00 });
@@ -146,8 +151,8 @@ function getMeshWithGeometryFromModel(model) {
   }
 }
 
-loader.load('single.glb', function (gltf) {
-  const model = getMeshWithGeometryFromModel(gltf.scene.children[0]);
+loader.load('combination-wrench.glb', function (gltf) {
+  const model = getMeshWithGeometryFromModel(gltf.scene);
   
   model.matrix.makeScale(0.3, 0.3, 0.3);
   model.geometry.applyMatrix4(model.matrix);
@@ -190,7 +195,7 @@ let tween = new TWEEN.Tween({ val: 0 }).to({ val: 1 }, 1300)
   });
 
 renderer.setAnimationLoop(() => {
-  controls.update();
+  // controls.update();
   TWEEN.update();
   if (instancedMesh) instancedMesh.instanceMatrix.needsUpdate = true;
   renderer.render(scene, camera);
