@@ -15,6 +15,38 @@ for (let i = 0; i < buttonsCtn.children.length; i++) {
   buttonsCtn.children[i].addEventListener('click', changeGeometry);
 }
 
+let total = 0;
+let current = 0;
+let tween;
+
+window.addEventListener("wheel", (event) => {
+  // console.log(event)
+  // for (let i = 0; i < event.deltaY; i += 2) {
+  //   total += i;
+  // }
+
+  total += event.deltaY / 10000;
+
+  if (tween) {
+    tween.stop();
+  }
+
+  let time = total > current ? total - current : current - total;
+  time = time * 10000;
+
+  if (time > 700) time = 1000;
+
+  console.log(time)
+
+  tween = new TWEEN.Tween({ val: current })
+    .to({ val: total }, time)
+    .onUpdate(val => {
+      current = val.val;
+    });
+    tween.start()
+});
+
+
 function changeGeometry(e) {
   let newGeometry = e.srcElement.getAttribute('data-geometry');
 
@@ -22,27 +54,27 @@ function changeGeometry(e) {
     case 'box':
       instStart = instFinish;
       instFinish = instBox;
-      tween.start();
+      // tween.start();
       break;
     case 'sphere':
       instStart = instFinish;
       instFinish = instSphere;
-      tween.start();
+      // tween.start();
       break;
     case 'torusknot':
       instStart = instFinish;
       instFinish = instTorusKnot;
-      tween.start();
+      // tween.start();
       break;
     case 'man':
       instStart = instFinish;
       instFinish = instMan;
-      tween.start();
+      // tween.start();
       break;
     case 'chainsaw':
       instStart = instFinish;
       instFinish = instChainsaw;
-      tween.start();
+      // tween.start();
       break;
     default:
       console.log('default');
@@ -79,7 +111,7 @@ let samplerSphere = new MeshSurfaceSampler(new THREE.Mesh(new THREE.SphereGeomet
 let samplerBox = new MeshSurfaceSampler(new THREE.Mesh(new THREE.BoxGeometry(2, 2, 2))).build();
 let samplerTorusKnot = new MeshSurfaceSampler(new THREE.Mesh(new THREE.TorusKnotGeometry(0.5, 0.2))).build();
 
-let MAX_COUNT = 30000;
+let MAX_COUNT = 10000;
 instancedMesh = new THREE.InstancedMesh(
   new THREE.BoxGeometry(0.01, 0.01, 0.01),
   new THREE.MeshStandardMaterial({
@@ -184,17 +216,23 @@ instStart = instTorusKnot;
 instFinish = instTorusKnot;
 scene.add(instancedMesh);
 
-let tween = new TWEEN.Tween({ val: 0 }).to({ val: 1 }, 1300)
-  .onUpdate(val => {
-    instObj.forEach((o, idx) => {
-      o.position.lerpVectors(instStart[idx], instFinish[idx], val.val);
-      o.updateMatrix();
-      instancedMesh.setMatrixAt(idx, o.matrix);
-    })
-    instancedMesh.instanceMatrix.needsUpdate = true;
-  });
+// tween = new TWEEN.Tween({ val: 0 }).to({ val: 1 }, 1300)
+//   .onUpdate(val => {
+//     instObj.forEach((o, idx) => {
+//       o.position.lerpVectors(instStart[idx], instFinish[idx], val.val);
+//       o.updateMatrix();
+//       instancedMesh.setMatrixAt(idx, o.matrix);
+//     })
+//     instancedMesh.instanceMatrix.needsUpdate = true;
+//   });
 
 renderer.setAnimationLoop(() => {
+  instObj.forEach((o, idx) => {
+    o.position.lerpVectors(instStart[idx], instFinish[idx], current);
+    o.updateMatrix();
+    instancedMesh.setMatrixAt(idx, o.matrix);
+  })
+  instancedMesh.instanceMatrix.needsUpdate = true;
   // controls.update();
   TWEEN.update();
   if (instancedMesh) instancedMesh.instanceMatrix.needsUpdate = true;
