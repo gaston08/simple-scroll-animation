@@ -1,5 +1,4 @@
 import * as THREE from 'three';
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { MeshSurfaceSampler } from "three/examples/jsm/math/MeshSurfaceSampler";
 import * as TWEEN from '@tweenjs/tween.js';
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
@@ -10,28 +9,15 @@ const draco = new DRACOLoader();
 draco.setDecoderPath('draco/gltf/');
 draco.setDecoderConfig({ type: 'js' });
 
-let buttonsCtn = document.getElementById('buttons');
-for (let i = 0; i < buttonsCtn.children.length; i++) {
-  buttonsCtn.children[i].addEventListener('click', changeGeometry);
-}
-
-let current = -3;
+let current = -6;
 let total = current;
 let tween;
 
 window.addEventListener("wheel", (event) => {
-  // console.log(event)
-  // for (let i = 0; i < event.deltaY; i += 2) {
-  //   total += i;
-  // }
-
-  console.log(current)
-  // total += event.deltaY / 10000;
-  total += event.deltaY / 5000;
-
   if (tween) {
     tween.stop();
   }
+  total += event.deltaY / 1000;
 
   let time = total > current ? total - current : current - total;
   time = time * 10000;
@@ -43,44 +29,8 @@ window.addEventListener("wheel", (event) => {
     .onUpdate(val => {
       current = val.val;
     });
-    tween.start()
+  tween.start();
 });
-
-
-function changeGeometry(e) {
-  let newGeometry = e.srcElement.getAttribute('data-geometry');
-
-  switch (newGeometry) {
-    case 'box':
-      instStart = instFinish;
-      instFinish = instBox;
-      // tween.start();
-      break;
-    case 'sphere':
-      instStart = instFinish;
-      instFinish = instSphere;
-      // tween.start();
-      break;
-    case 'torusknot':
-      instStart = instFinish;
-      instFinish = instTorusKnot;
-      // tween.start();
-      break;
-    case 'man':
-      instStart = instFinish;
-      instFinish = instMan;
-      // tween.start();
-      break;
-    case 'chainsaw':
-      instStart = instFinish;
-      instFinish = instChainsaw;
-      // tween.start();
-      break;
-    default:
-      console.log('default');
-      break;
-  }
-}
 
 let scene = new THREE.Scene();
 let camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 0.1, 100);
@@ -88,10 +38,8 @@ camera.position.set(2, -1.5, 3).setLength(3);
 camera.lookAt(scene.position)
 let renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(innerWidth, innerHeight);
+renderer.domElement.id = 'app';
 document.body.appendChild(renderer.domElement);
-
-// let controls = new OrbitControls(camera, renderer.domElement);
-// controls.enableDamping = true;
 
 let light = new THREE.DirectionalLight(0xffffff, 0.5);
 light.position.setScalar(1);
@@ -107,7 +55,7 @@ let instTorusKnot = [];
 let instMan = [];
 let instChainsaw = [];
 
-let samplerSphere = new MeshSurfaceSampler(new THREE.Mesh(new THREE.SphereGeometry(1))).build();
+let samplerSphere = new MeshSurfaceSampler(new THREE.Mesh(new THREE.SphereGeometry(0.1))).build();
 let samplerBox = new MeshSurfaceSampler(new THREE.Mesh(new THREE.BoxGeometry(2, 2, 2))).build();
 let samplerTorusKnot = new MeshSurfaceSampler(new THREE.Mesh(new THREE.TorusKnotGeometry(0.5, 0.2))).build();
 
@@ -163,14 +111,11 @@ loader.load('man.glb', function (gltf) {
 });
 
 function getMeshWithGeometryFromModel(model) {
-  console.log("1")
-  console.log(model)
   if (model.geometry) {
-    console.log("2")
     return model.children[0];
   } else {
     const geometries = [];
-    model.traverse(function(child) {
+    model.traverse(function (child) {
       if (child.isMesh) {
         geometries.push(child.geometry);
       }
@@ -185,7 +130,7 @@ function getMeshWithGeometryFromModel(model) {
 
 loader.load('combination-wrench.glb', function (gltf) {
   const model = getMeshWithGeometryFromModel(gltf.scene);
-  
+
   model.matrix.makeScale(0.3, 0.3, 0.3);
   model.geometry.applyMatrix4(model.matrix);
 
@@ -216,16 +161,6 @@ instStart = instSphere;
 instFinish = instTorusKnot;
 scene.add(instancedMesh);
 
-// tween = new TWEEN.Tween({ val: 0 }).to({ val: 1 }, 1300)
-//   .onUpdate(val => {
-//     instObj.forEach((o, idx) => {
-//       o.position.lerpVectors(instStart[idx], instFinish[idx], val.val);
-//       o.updateMatrix();
-//       instancedMesh.setMatrixAt(idx, o.matrix);
-//     })
-//     instancedMesh.instanceMatrix.needsUpdate = true;
-//   });
-
 renderer.setAnimationLoop(() => {
   instObj.forEach((o, idx) => {
     o.position.lerpVectors(instStart[idx], instFinish[idx], current);
@@ -233,7 +168,6 @@ renderer.setAnimationLoop(() => {
     instancedMesh.setMatrixAt(idx, o.matrix);
   })
   instancedMesh.instanceMatrix.needsUpdate = true;
-  // controls.update();
   TWEEN.update();
   if (instancedMesh) instancedMesh.instanceMatrix.needsUpdate = true;
   renderer.render(scene, camera);
