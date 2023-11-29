@@ -15,8 +15,8 @@ for (let i = 0; i < buttonsCtn.children.length; i++) {
   buttonsCtn.children[i].addEventListener('click', changeGeometry);
 }
 
-let total = 0;
-let current = 0;
+let current = -3;
+let total = current;
 let tween;
 
 window.addEventListener("wheel", (event) => {
@@ -25,7 +25,9 @@ window.addEventListener("wheel", (event) => {
   //   total += i;
   // }
 
-  total += event.deltaY / 10000;
+  console.log(current)
+  // total += event.deltaY / 10000;
+  total += event.deltaY / 5000;
 
   if (tween) {
     tween.stop();
@@ -35,8 +37,6 @@ window.addEventListener("wheel", (event) => {
   time = time * 10000;
 
   if (time > 700) time = 1000;
-
-  console.log(time)
 
   tween = new TWEEN.Tween({ val: current })
     .to({ val: total }, time)
@@ -212,7 +212,7 @@ loader.load('combination-wrench.glb', function (gltf) {
     console.log(error)
   });
 
-instStart = instTorusKnot;
+instStart = instSphere;
 instFinish = instTorusKnot;
 scene.add(instancedMesh);
 
