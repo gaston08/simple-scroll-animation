@@ -56,7 +56,7 @@ let initP = new THREE.Vector3(0, 0, 0);
 let finishP = new THREE.Vector3(1.5, -0.35, 0);
 
 const scrollHeight = window.document.documentElement.scrollHeight;
-window.scroll(0, 9000);
+window.scroll(0, 0);
 
 function getCurrentPhase(scrollPosition) {
   let phase;
@@ -85,10 +85,14 @@ window.addEventListener("scroll", (e) => {
     if (currents.first !== 1) {
       tweens.first.stop();
       totals.first = 1;
-      playOnPhase("first", 100);
+      playOnPhase("first", 200);
     }
     if (currentPhase === 'second') {
       totals.second = (scrollPosition - heights.first.end) * (1 - 0) / (heights.second.end - heights.first.end);
+    } else {
+      tweens.second.stop();
+      totals.second = 1;
+      playOnPhase("second", 200);
     }
   }
 
