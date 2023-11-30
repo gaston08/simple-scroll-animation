@@ -18,44 +18,95 @@ const loader = new GLTFLoader();
 loader.setDRACOLoader(draco);
 
 let total = 0;
-let tween;
 let scrollPosition;
 
 let currents = {
   first: 0,
+  second: 0,
 }
 
 let totals = {
   first: 0,
+  second: 0,
 }
 
+let tweens = {
+  first: null,
+  second: null,
+}
+
+let heights = {
+  first: {
+    start: 0,
+    end: 10000
+  },
+  second: {
+    start: 10000,
+    end: 12000
+  }
+}
+
+let initP = new THREE.Vector3(0, 0, 0);
+let finishP = new THREE.Vector3(1, 0, 0);
+
 const scrollHeight = window.document.documentElement.scrollHeight;
-window.scroll(0, 0);
+window.scroll(0, 9000);
+
+function getCurrentPhase(scrollPosition) {
+  let phase;
+  if (scrollPosition < heights.first.end) {
+    phase = 'first';
+  } else if (scrollPosition < heights.second.end) {
+    phase = 'second';
+  }
+  return phase;
+}
 
 window.addEventListener("scroll", (e) => {
-
+  
   scrollPosition = document.documentElement.scrollTop;
+  total = scrollPosition / scrollHeight;
 
-  if (tween) {
-    tween.stop();
+  let currentPhase = getCurrentPhase(scrollPosition);
+
+  if (tweens[currentPhase]) {
+    tweens[currentPhase].stop();
   }
 
-  total = scrollPosition / scrollHeight;
   // total = (((scrollPosition - 0) * (1 - 0)) / (scrollHeight - 0));
   // total = (((scrollPosition - 10000) * (1 - 0)) / (20000 - 10000));
 
-  let time = total > currents.first ? total - currents.first : currents.first - total;
-  totals.first = (scrollPosition - 0) * (1 - 0) / 10000;
-  time = time * 10000;
+  if (currentPhase === 'first') {
+    let time = total > currents.first ? total - currents.first : currents.first - total;
+    time = time * 10000;
+  
+    totals.first = (scrollPosition - 0) * (1 - 0) / heights.first.end;
+  
+    if (time > 700) time = 1000;
+  
+    tweens.first = new TWEEN.Tween({ val: currents.first })
+      .to({ val: totals.first }, time)
+      .onUpdate(val => {
+        currents.first = val.val;
+      });
+    tweens.first.start();
+  } else if (currentPhase === 'second') {
+    let time = total > currents.first ? total - currents.first : currents.first - total;
+    time = time * 10000;
 
-  if (time > 700) time = 1000;
+    totals.second = (scrollPosition - heights.first.end) * (1 - 0) / (heights.second.end - heights.first.end);
+    
+    if (time > 700) time = 1000;
 
-  tween = new TWEEN.Tween({ val: currents.first })
-    .to({ val: totals.first }, time)
+    tweens.second = new TWEEN.Tween({ val: currents.second })
+    .to({ val: totals.second }, time)
     .onUpdate(val => {
-      currents.first = val.val;
-    });
-  tween.start();
+      console.log(currents.second)
+      currents.second = val.val;
+    })
+
+    tweens.second.start();
+  }
 
 });
 
@@ -170,13 +221,18 @@ renderer.setAnimationLoop(() => {
 
   stats.begin();
 
-  if (total !== currents.first) {
+  if (totals.first !== currents.first) {
     instObj.forEach((o, idx) => {
       o.position.lerpVectors(instStart[idx], instFinish[idx], currents.first);
       o.updateMatrix();
       instancedMesh.setMatrixAt(idx, o.matrix);
     });
     instancedMesh.instanceMatrix.needsUpdate = true;
+  }
+
+  if (totals.second !== currents.second) {
+    instancedMesh.position.lerpVectors(initP, finishP, currents.second);
+    instancedMesh.updateMatrix();
   }
 
   TWEEN.update();
