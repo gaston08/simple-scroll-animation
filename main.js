@@ -4,76 +4,45 @@ import * as TWEEN from '@tweenjs/tween.js';
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader';
 import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
+import Stats from 'stats.js';
+
+let stats = new Stats();
+stats.showPanel(1);
+document.body.appendChild(stats.dom);
 
 const draco = new DRACOLoader();
 draco.setDecoderPath('draco/gltf/');
 draco.setDecoderConfig({ type: 'js' });
 
-let current = 0;
-let total = current;
-let tween, tweenP;
+const loader = new GLTFLoader();
+loader.setDRACOLoader(draco);
 
-let showTitle = 10000;
-let moveSphere = 9000;
-
-let currentP = 0;
+let current = 0, total = 0;
+let tween;
+let scrollPosition;
 
 window.addEventListener("scroll", (e) => {
-  
-  let scrollPosition = document.documentElement.scrollTop;
-  
+
+  scrollPosition = document.documentElement.scrollTop;
+
   if (tween) {
     tween.stop();
   }
-  let total = (((scrollPosition - 0) * (1 - 0)) / (10000 - 0)) + 0;
 
-  
-  let rationP = (((scrollPosition - moveSphere) * (1 - 0)) / (showTitle - moveSphere)) + 0;
-  if (rationP >= 0 && rationP <= 1) {
-    if (tweenP) {
-      tweenP.stop();
-    }
+  total = (((scrollPosition - 0) * (1 - 0)) / (10000 - 0));
+  // total = (((scrollPosition - 10000) * (1 - 0)) / (20000 - 10000));
 
-    let timeP = rationP > currentP ? rationP - currentP : currentP - rationP;
+  let time = total > current ? total - current : current - total;
+  time = time * 10000;
 
-    tweenP = new TWEEN.Tween({ val: currentP })
-    .to ({ val: rationP }, timeP)
+  if (time > 700) time = 1000;
+
+  tween = new TWEEN.Tween({ val: current })
+    .to({ val: total }, time)
     .onUpdate(val => {
-      currentP = val.val
-    })
-    .onComplete((val) => {
-      console.log(val.val)
-      if (current >= 1) {
-
-      }
-    })
-    tweenP.start();
-  } else {
-    if (tweenP) {
-      tweenP.stop();
-    }
-  }
-
-  if (total >= 0 && total <= 1) {
-    if (total >= 0.9) {
-      console.log("HERE")
-      console.log(total)
-      total = 1;
-    }
-    let time = total > current ? total - current : current - total;
-    time = time * 10000;
-  
-    if (time > 700) time = 1000;
-  
-    tween = new TWEEN.Tween({ val: current })
-      .to({ val: total }, time)
-      .onUpdate(val => {
-        current = val.val;
-      });
-    tween.start();
-  } else {
-    if (tween) tween.stop();
-  }
+      current = val.val;
+    });
+  tween.start();
 
 });
 
@@ -96,7 +65,6 @@ let instancedMesh;
 
 let instSphereBig = [];
 let instSphereSmall = [];
-let instMan = [];
 let instChainsaw = [];
 
 let samplerSphereBig = new MeshSurfaceSampler(new THREE.Mesh(new THREE.SphereGeometry(4))).build();
@@ -116,7 +84,7 @@ const instObj = new Array(MAX_COUNT).fill(new THREE.Object3D());
 for (let idx = 0; idx < MAX_COUNT; idx++) {
   samplerSphereSmall.sample(v);
   instSphereSmall.push(v.clone());
-  
+
   samplerSphereBig.sample(v);
   instSphereBig.push(v.clone());
 
@@ -126,29 +94,7 @@ for (let idx = 0; idx < MAX_COUNT; idx++) {
   instancedMesh.setMatrixAt(idx, d.matrix);
 };
 
-const loader = new GLTFLoader();
-loader.setDRACOLoader(draco);
 
-loader.load('man.glb', function (gltf) {
-  const model = gltf.scene.children[0];
-  model.matrix.makeScale(10, 10, 10);
-  model.geometry.applyMatrix4(model.matrix);
-
-  model.matrix.makeTranslation(0, -0.5, 0);
-  model.geometry.applyMatrix4(model.matrix);
-
-  const sampler = new MeshSurfaceSampler(model).build();
-  const tempPosition = new THREE.Vector3();
-
-  for (let i = 0; i < MAX_COUNT; i++) {
-    sampler.sample(tempPosition);
-    instMan.push({
-      x: tempPosition.x,
-      y: tempPosition.y,
-      z: tempPosition.z
-    });
-  }
-});
 
 function getMeshWithGeometryFromModel(model) {
   if (model.geometry) {
@@ -201,19 +147,28 @@ instStart = instSphereBig;
 instFinish = instSphereSmall;
 scene.add(instancedMesh);
 
-let initialPosition = new THREE.Vector3(0.8, -0.5, 0.8);
-let finalPosition = new THREE.Vector3(2, 0, 0);
+let geometry = new THREE.BoxGeometry(0.1, 0.1, 0.1);
+let material = new THREE.MeshStandardMaterial();
+let mesh = new THREE.Mesh(geometry, material);
+mesh.position.y = 0.8;
+scene.add(mesh);
 
 renderer.setAnimationLoop(() => {
-  instObj.forEach((o, idx) => {
-    o.position.lerpVectors(instStart[idx], instFinish[idx], current);
-    o.updateMatrix();
-    instancedMesh.setMatrixAt(idx, o.matrix);
-  })
-  instancedMesh.position.lerpVectors(initialPosition, finalPosition, currentP);
-  instancedMesh.instanceMatrix.needsUpdate = true;
+
+  stats.begin();
+
+  if (total !== current) {
+    instObj.forEach((o, idx) => {
+      o.position.lerpVectors(instStart[idx], instFinish[idx], current);
+      o.updateMatrix();
+      instancedMesh.setMatrixAt(idx, o.matrix);
+    });
+    instancedMesh.instanceMatrix.needsUpdate = true;
+  }
+
   TWEEN.update();
-  if (instancedMesh) instancedMesh.instanceMatrix.needsUpdate = true;
+
+  stats.end();
   renderer.render(scene, camera);
 })
 
