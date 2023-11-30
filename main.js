@@ -5,6 +5,12 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader';
 import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
 import Stats from 'stats.js';
+import GUI from 'lil-gui'; 
+
+const gui = new GUI();
+const params = {
+  number: 0,
+}
 
 let stats = new Stats();
 stats.showPanel(1);
@@ -42,12 +48,12 @@ let heights = {
   },
   second: {
     start: 10000,
-    end: 12000
+    end: 11000
   }
 }
 
 let initP = new THREE.Vector3(0, 0, 0);
-let finishP = new THREE.Vector3(1, 0, 0);
+let finishP = new THREE.Vector3(1.5, -0.35, 0);
 
 const scrollHeight = window.document.documentElement.scrollHeight;
 window.scroll(0, 9000);
@@ -87,6 +93,7 @@ window.addEventListener("scroll", (e) => {
     tweens.first = new TWEEN.Tween({ val: currents.first })
       .to({ val: totals.first }, time)
       .onUpdate(val => {
+        console.log(currents.first)
         currents.first = val.val;
       });
     tweens.first.start();
@@ -101,7 +108,6 @@ window.addEventListener("scroll", (e) => {
     tweens.second = new TWEEN.Tween({ val: currents.second })
     .to({ val: totals.second }, time)
     .onUpdate(val => {
-      console.log(currents.second)
       currents.second = val.val;
     })
 
@@ -216,6 +222,10 @@ let material = new THREE.MeshStandardMaterial();
 let mesh = new THREE.Mesh(geometry, material);
 mesh.position.y = 0.8;
 scene.add(mesh);
+
+// gui.add(instancedMesh.position, 'x', 1, 2);
+// gui.add(instancedMesh.position, 'y', -1, 0);
+// gui.add(instancedMesh.position, 'z', -1, 0);
 
 renderer.setAnimationLoop(() => {
 
