@@ -17,9 +17,20 @@ draco.setDecoderConfig({ type: 'js' });
 const loader = new GLTFLoader();
 loader.setDRACOLoader(draco);
 
-let current = 0, total = 0;
+let total = 0;
 let tween;
 let scrollPosition;
+
+let currents = {
+  first: 0,
+}
+
+let totals = {
+  first: 0,
+}
+
+const scrollHeight = window.document.documentElement.scrollHeight;
+window.scroll(0, 0);
 
 window.addEventListener("scroll", (e) => {
 
@@ -29,18 +40,20 @@ window.addEventListener("scroll", (e) => {
     tween.stop();
   }
 
-  total = (((scrollPosition - 0) * (1 - 0)) / (10000 - 0));
+  total = scrollPosition / scrollHeight;
+  // total = (((scrollPosition - 0) * (1 - 0)) / (scrollHeight - 0));
   // total = (((scrollPosition - 10000) * (1 - 0)) / (20000 - 10000));
 
-  let time = total > current ? total - current : current - total;
+  let time = total > currents.first ? total - currents.first : currents.first - total;
+  totals.first = (scrollPosition - 0) * (1 - 0) / 10000;
   time = time * 10000;
 
   if (time > 700) time = 1000;
 
-  tween = new TWEEN.Tween({ val: current })
-    .to({ val: total }, time)
+  tween = new TWEEN.Tween({ val: currents.first })
+    .to({ val: totals.first }, time)
     .onUpdate(val => {
-      current = val.val;
+      currents.first = val.val;
     });
   tween.start();
 
@@ -157,9 +170,9 @@ renderer.setAnimationLoop(() => {
 
   stats.begin();
 
-  if (total !== current) {
+  if (total !== currents.first) {
     instObj.forEach((o, idx) => {
-      o.position.lerpVectors(instStart[idx], instFinish[idx], current);
+      o.position.lerpVectors(instStart[idx], instFinish[idx], currents.first);
       o.updateMatrix();
       instancedMesh.setMatrixAt(idx, o.matrix);
     });
