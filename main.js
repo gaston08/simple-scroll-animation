@@ -9,27 +9,72 @@ const draco = new DRACOLoader();
 draco.setDecoderPath('draco/gltf/');
 draco.setDecoderConfig({ type: 'js' });
 
-let current = -6;
+let current = 0;
 let total = current;
-let tween;
+let tween, tweenP;
 
-window.addEventListener("wheel", (event) => {
+let showTitle = 10000;
+let moveSphere = 9000;
+
+let currentP = 0;
+
+window.addEventListener("scroll", (e) => {
+  
+  let scrollPosition = document.documentElement.scrollTop;
+  
   if (tween) {
     tween.stop();
   }
-  total += event.deltaY / 1000;
+  let total = (((scrollPosition - 0) * (1 - 0)) / (10000 - 0)) + 0;
 
-  let time = total > current ? total - current : current - total;
-  time = time * 10000;
+  
+  let rationP = (((scrollPosition - moveSphere) * (1 - 0)) / (showTitle - moveSphere)) + 0;
+  if (rationP >= 0 && rationP <= 1) {
+    if (tweenP) {
+      tweenP.stop();
+    }
 
-  if (time > 700) time = 1000;
+    let timeP = rationP > currentP ? rationP - currentP : currentP - rationP;
 
-  tween = new TWEEN.Tween({ val: current })
-    .to({ val: total }, time)
+    tweenP = new TWEEN.Tween({ val: currentP })
+    .to ({ val: rationP }, timeP)
     .onUpdate(val => {
-      current = val.val;
-    });
-  tween.start();
+      currentP = val.val
+    })
+    .onComplete((val) => {
+      console.log(val.val)
+      if (current >= 1) {
+
+      }
+    })
+    tweenP.start();
+  } else {
+    if (tweenP) {
+      tweenP.stop();
+    }
+  }
+
+  if (total >= 0 && total <= 1) {
+    if (total >= 0.9) {
+      console.log("HERE")
+      console.log(total)
+      total = 1;
+    }
+    let time = total > current ? total - current : current - total;
+    time = time * 10000;
+  
+    if (time > 700) time = 1000;
+  
+    tween = new TWEEN.Tween({ val: current })
+      .to({ val: total }, time)
+      .onUpdate(val => {
+        current = val.val;
+      });
+    tween.start();
+  } else {
+    if (tween) tween.stop();
+  }
+
 });
 
 let scene = new THREE.Scene();
@@ -49,17 +94,15 @@ let instStart = [];
 let instFinish = [];
 let instancedMesh;
 
-let instBox = [];
-let instSphere = [];
-let instTorusKnot = [];
+let instSphereBig = [];
+let instSphereSmall = [];
 let instMan = [];
 let instChainsaw = [];
 
-let samplerSphere = new MeshSurfaceSampler(new THREE.Mesh(new THREE.SphereGeometry(0.1))).build();
-let samplerBox = new MeshSurfaceSampler(new THREE.Mesh(new THREE.BoxGeometry(2, 2, 2))).build();
-let samplerTorusKnot = new MeshSurfaceSampler(new THREE.Mesh(new THREE.TorusKnotGeometry(0.5, 0.2))).build();
+let samplerSphereBig = new MeshSurfaceSampler(new THREE.Mesh(new THREE.SphereGeometry(4))).build();
+let samplerSphereSmall = new MeshSurfaceSampler(new THREE.Mesh(new THREE.SphereGeometry(0.1))).build();
 
-let MAX_COUNT = 10000;
+let MAX_COUNT = 5000;
 instancedMesh = new THREE.InstancedMesh(
   new THREE.BoxGeometry(0.01, 0.01, 0.01),
   new THREE.MeshStandardMaterial({
@@ -71,14 +114,11 @@ let d = new THREE.Object3D();
 const instObj = new Array(MAX_COUNT).fill(new THREE.Object3D());
 
 for (let idx = 0; idx < MAX_COUNT; idx++) {
-  samplerBox.sample(v);
-  instBox.push(v.clone());
-
-  samplerSphere.sample(v);
-  instSphere.push(v.clone());
-
-  samplerTorusKnot.sample(v);
-  instTorusKnot.push(v.clone());
+  samplerSphereSmall.sample(v);
+  instSphereSmall.push(v.clone());
+  
+  samplerSphereBig.sample(v);
+  instSphereBig.push(v.clone());
 
   // default
   d.position.copy(v.clone());
@@ -157,9 +197,12 @@ loader.load('combination-wrench.glb', function (gltf) {
     console.log(error)
   });
 
-instStart = instSphere;
-instFinish = instTorusKnot;
+instStart = instSphereBig;
+instFinish = instSphereSmall;
 scene.add(instancedMesh);
+
+let initialPosition = new THREE.Vector3(0.8, -0.5, 0.8);
+let finalPosition = new THREE.Vector3(2, 0, 0);
 
 renderer.setAnimationLoop(() => {
   instObj.forEach((o, idx) => {
@@ -167,6 +210,7 @@ renderer.setAnimationLoop(() => {
     o.updateMatrix();
     instancedMesh.setMatrixAt(idx, o.matrix);
   })
+  instancedMesh.position.lerpVectors(initialPosition, finalPosition, currentP);
   instancedMesh.instanceMatrix.needsUpdate = true;
   TWEEN.update();
   if (instancedMesh) instancedMesh.instanceMatrix.needsUpdate = true;
