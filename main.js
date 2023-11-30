@@ -79,42 +79,37 @@ window.addEventListener("scroll", (e) => {
     tweens[currentPhase].stop();
   }
 
-  // total = (((scrollPosition - 0) * (1 - 0)) / (scrollHeight - 0));
-  // total = (((scrollPosition - 10000) * (1 - 0)) / (20000 - 10000));
-
   if (currentPhase === 'first') {
-    let time = total > currents.first ? total - currents.first : currents.first - total;
-    time = time * 10000;
-  
     totals.first = (scrollPosition - 0) * (1 - 0) / heights.first.end;
-  
-    if (time > 700) time = 1000;
-  
-    tweens.first = new TWEEN.Tween({ val: currents.first })
-      .to({ val: totals.first }, time)
-      .onUpdate(val => {
-        console.log(currents.first)
-        currents.first = val.val;
-      });
-    tweens.first.start();
-  } else if (currentPhase === 'second') {
-    let time = total > currents.first ? total - currents.first : currents.first - total;
-    time = time * 10000;
-
-    totals.second = (scrollPosition - heights.first.end) * (1 - 0) / (heights.second.end - heights.first.end);
-    
-    if (time > 700) time = 1000;
-
-    tweens.second = new TWEEN.Tween({ val: currents.second })
-    .to({ val: totals.second }, time)
-    .onUpdate(val => {
-      currents.second = val.val;
-    })
-
-    tweens.second.start();
+  } else {
+    if (currents.first !== 1) {
+      tweens.first.stop();
+      totals.first = 1;
+      playOnPhase("first", 100);
+    }
+    if (currentPhase === 'second') {
+      totals.second = (scrollPosition - heights.first.end) * (1 - 0) / (heights.second.end - heights.first.end);
+    }
   }
 
+  if (currentPhase) {
+    playOnPhase(currentPhase);
+  }
+  
 });
+
+function playOnPhase(phase, t) {
+  let time = t ? t : (total > currents[phase] ? totals[phase] - currents[phase] : currents[phase] - totals[phase]);
+  time = time * 10000;
+  if (time > 700) time = 1000;
+
+  tweens[phase] = new TWEEN.Tween({ val: currents[phase]})
+  .to({ val: totals[phase]})
+  .onUpdate(val => {
+    currents[phase] = val.val;
+  })
+  tweens[phase].start();
+}
 
 let scene = new THREE.Scene();
 let camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 0.1, 100);
