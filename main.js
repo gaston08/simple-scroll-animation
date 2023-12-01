@@ -81,6 +81,11 @@ window.addEventListener("scroll", (e) => {
 
   if (currentPhase === 'first') {
     totals.first = (scrollPosition - 0) * (1 - 0) / heights.first.end;
+    if (tweens.second) {
+      tweens.second.stop();
+      totals.second = 0;
+      playOnPhase('second', 200);
+    }
   } else {
     if (currents.first !== 1) {
       tweens.first.stop();
@@ -105,7 +110,7 @@ window.addEventListener("scroll", (e) => {
 function playOnPhase(phase, t) {
   let time = t ? t : (total > currents[phase] ? totals[phase] - currents[phase] : currents[phase] - totals[phase]);
   time = time * 10000;
-  if (time > 700) time = 1000;
+  // if (time > 700) time = 1000;
 
   tweens[phase] = new TWEEN.Tween({ val: currents[phase]})
   .to({ val: totals[phase]})
