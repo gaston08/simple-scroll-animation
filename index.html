@@ -33,16 +33,26 @@
         position: fixed;
       }
 
+      #title-container {
+        height: 4000px;
+        position: absolute;
+        top: 10000px;
+        border: 1px solid red;
+      }
+
       #title {
-        margin-top: 10000px;
+        position: sticky;
+        top: 200px;
       }
 
     </style>
   </head>
   <body>
     <div id="text-container">
-      <div id="title">
-        <h1>Hello world</h1>
+      <div id="title-container">
+        <div id="title">
+          <h1>Hello world</h1>
+        </div>
       </div>
     </div>
     <script type="module" src="/main.js"></script>

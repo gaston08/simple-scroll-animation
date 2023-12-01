@@ -49,14 +49,25 @@ let heights = {
   second: {
     start: 10000,
     end: 11000
+  },
+  third: {
+    start: 14000,
   }
 }
 
 let initP = new THREE.Vector3(0, 0, 0);
 let finishP = new THREE.Vector3(1.5, -0.35, 0);
 
+let startingPoint = true;
+
 const scrollHeight = window.document.documentElement.scrollHeight;
-window.scroll(0, 0);
+
+function init() {
+  window.scroll(0, 12000);
+  playOnPhase('first');
+  playOnPhase('second');
+}
+init();
 
 function getCurrentPhase(scrollPosition) {
   let phase;
@@ -73,6 +84,8 @@ window.addEventListener("scroll", (e) => {
   scrollPosition = document.documentElement.scrollTop;
   total = scrollPosition / scrollHeight;
 
+  console.log(scrollPosition)
+
   let currentPhase = getCurrentPhase(scrollPosition);
 
   if (tweens[currentPhase]) {
@@ -80,6 +93,7 @@ window.addEventListener("scroll", (e) => {
   }
 
   if (currentPhase === 'first') {
+    startingPoint = true;
     totals.first = (scrollPosition - 0) * (1 - 0) / heights.first.end;
     if (tweens.second) {
       tweens.second.stop();
@@ -87,6 +101,7 @@ window.addEventListener("scroll", (e) => {
       playOnPhase('second', 200);
     }
   } else {
+    startingPoint = false;
     if (currents.first !== 1) {
       tweens.first.stop();
       totals.first = 1;
@@ -95,9 +110,11 @@ window.addEventListener("scroll", (e) => {
     if (currentPhase === 'second') {
       totals.second = (scrollPosition - heights.first.end) * (1 - 0) / (heights.second.end - heights.first.end);
     } else {
-      tweens.second.stop();
-      totals.second = 1;
-      playOnPhase("second", 200);
+      if (currents.second !== 1) {
+        tweens.second.stop();
+        totals.second = 1;
+        playOnPhase("second", 200);
+      }
     }
   }
 
@@ -141,7 +158,7 @@ let instSphereBig = [];
 let instSphereSmall = [];
 let instChainsaw = [];
 
-let samplerSphereBig = new MeshSurfaceSampler(new THREE.Mesh(new THREE.SphereGeometry(4))).build();
+let samplerSphereBig = new MeshSurfaceSampler(new THREE.Mesh(new THREE.SphereGeometry(3))).build();
 let samplerSphereSmall = new MeshSurfaceSampler(new THREE.Mesh(new THREE.SphereGeometry(0.1))).build();
 
 let MAX_COUNT = 5000;
@@ -221,19 +238,26 @@ instStart = instSphereBig;
 instFinish = instSphereSmall;
 scene.add(instancedMesh);
 
-let geometry = new THREE.BoxGeometry(0.1, 0.1, 0.1);
-let material = new THREE.MeshStandardMaterial();
-let mesh = new THREE.Mesh(geometry, material);
-mesh.position.y = 0.8;
-scene.add(mesh);
+// let geometry = new THREE.BoxGeometry(0.1, 0.1, 0.1);
+// let material = new THREE.MeshStandardMaterial();
+// let mesh = new THREE.Mesh(geometry, material);
+// mesh.position.y = 0.8;
+// scene.add(mesh);
 
 // gui.add(instancedMesh.position, 'x', 1, 2);
 // gui.add(instancedMesh.position, 'y', -1, 0);
 // gui.add(instancedMesh.position, 'z', -1, 0);
 
+let clock = new THREE.Clock();
+let t;
+
+let aux = new THREE.Vector3();
+let bool = true;
+
 renderer.setAnimationLoop(() => {
 
   stats.begin();
+  t = clock.getDelta() / 10;
 
   if (totals.first !== currents.first) {
     instObj.forEach((o, idx) => {
@@ -246,6 +270,12 @@ renderer.setAnimationLoop(() => {
 
   if (totals.second !== currents.second) {
     instancedMesh.position.lerpVectors(initP, finishP, currents.second);
+    instancedMesh.updateMatrix();
+  }
+
+  if (startingPoint) {
+    instancedMesh.rotation.x += t;
+    instancedMesh.rotation.y += t;
     instancedMesh.updateMatrix();
   }
 
