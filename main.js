@@ -1,25 +1,47 @@
 import * as THREE from 'three';
 import { MeshSurfaceSampler } from "three/examples/jsm/math/MeshSurfaceSampler";
 import * as TWEEN from '@tweenjs/tween.js';
-import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
-import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader';
 import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
-import Stats from 'stats.js';
-
-let stats = new Stats();
-stats.showPanel(1);
-document.body.appendChild(stats.dom);
-
-const draco = new DRACOLoader();
-draco.setDecoderPath('draco/gltf/');
-draco.setDecoderConfig({ type: 'js' });
-
-const loader = new GLTFLoader();
-loader.setDRACOLoader(draco);
+import { stats } from './ui';
 
 let current = 0, total = 0;
 let tween;
-let scrollPosition;
+let scrollPosition = 0;
+
+let scrollHeight = document.documentElement.scrollHeight;
+
+const positions = [
+  {
+    start: 0,
+    end: 3000,
+    from: new THREE.Vector3(0, 0, 0),
+    to: new THREE.Vector3(1, 0, 0)
+  },
+  {
+    start: 4000,
+    end: 7000,
+    from: new THREE.Vector3(1, 0, 0),
+    to: new THREE.Vector3(-1, 0, 0)
+  },
+  {
+    start: 8000,
+    end: 12000,
+    from: new THREE.Vector3(-1, 0, 0),
+    end: new THREE.Vector3(-1, 1, 0),
+  }
+];
+
+let pStart = new THREE.Vector3(0, 0, 0);
+let pEnd = new THREE.Vector3(0, 0, 0);
+
+function setParams(p) {
+  for (let i = 0; i < positions.length; i++) {
+    if (p >= positions[i].start && p < positions[i].end) {
+      pStart = positions[i].start;
+      pEnd = positions[i].end;
+    }
+  }
+}
 
 window.addEventListener("scroll", (e) => {
 
@@ -29,20 +51,23 @@ window.addEventListener("scroll", (e) => {
     tween.stop();
   }
 
-  total = (((scrollPosition - 0) * (1 - 0)) / (10000 - 0));
+  setParams(scrollPosition);
+
+  total = scrollPosition / scrollHeight;
+  
   // total = (((scrollPosition - 10000) * (1 - 0)) / (20000 - 10000));
 
-  let time = total > current ? total - current : current - total;
-  time = time * 10000;
+  // let time = total > current ? total - current : current - total;
+  // time = time * 10000;
 
-  if (time > 700) time = 1000;
+  // if (time > 700) time = 1000;
 
-  tween = new TWEEN.Tween({ val: current })
-    .to({ val: total }, time)
-    .onUpdate(val => {
-      current = val.val;
-    });
-  tween.start();
+  // tween = new TWEEN.Tween({ val: current })
+  //   .to({ val: total }, time)
+  //   .onUpdate(val => {
+  //     current = val.val;
+  //   });
+  // tween.start();
 
 });
 
@@ -94,58 +119,9 @@ for (let idx = 0; idx < MAX_COUNT; idx++) {
   instancedMesh.setMatrixAt(idx, d.matrix);
 };
 
-
-
-function getMeshWithGeometryFromModel(model) {
-  if (model.geometry) {
-    return model.children[0];
-  } else {
-    const geometries = [];
-    model.traverse(function (child) {
-      if (child.isMesh) {
-        geometries.push(child.geometry);
-      }
-    });
-    const geometry = BufferGeometryUtils.mergeGeometries(geometries);
-
-    const material = new THREE.MeshBasicMaterial({ color: 0xffff00 });
-    const mesh = new THREE.Mesh(geometry, material);
-    return mesh;
-  }
-}
-
-loader.load('combination-wrench.glb', function (gltf) {
-  const model = getMeshWithGeometryFromModel(gltf.scene);
-
-  model.matrix.makeScale(0.3, 0.3, 0.3);
-  model.geometry.applyMatrix4(model.matrix);
-
-  model.matrix.makeTranslation(0, -0.5, 0);
-  model.geometry.applyMatrix4(model.matrix);
-
-  const sampler = new MeshSurfaceSampler(model).build();
-  const tempPosition = new THREE.Vector3();
-
-  for (let i = 0; i < MAX_COUNT; i++) {
-    sampler.sample(tempPosition);
-    instChainsaw.push({
-      x: tempPosition.x,
-      y: tempPosition.y,
-      z: tempPosition.z
-    });
-  }
-},
-  function (xhr) {
-    console.log((xhr.loaded / xhr.total * 100) + '% loaded');
-  },
-  function (error) {
-    console.log('An error happened');
-    console.log(error)
-  });
-
 instStart = instSphereBig;
 instFinish = instSphereSmall;
-scene.add(instancedMesh);
+// scene.add(instancedMesh);
 
 let geometry = new THREE.BoxGeometry(0.1, 0.1, 0.1);
 let material = new THREE.MeshStandardMaterial();
@@ -157,14 +133,14 @@ renderer.setAnimationLoop(() => {
 
   stats.begin();
 
-  if (total !== current) {
-    instObj.forEach((o, idx) => {
-      o.position.lerpVectors(instStart[idx], instFinish[idx], current);
-      o.updateMatrix();
-      instancedMesh.setMatrixAt(idx, o.matrix);
-    });
-    instancedMesh.instanceMatrix.needsUpdate = true;
-  }
+  // if (total !== current) {
+  //   instObj.forEach((o, idx) => {
+  //     o.position.lerpVectors(instStart[idx], instFinish[idx], current);
+  //     o.updateMatrix();
+  //     instancedMesh.setMatrixAt(idx, o.matrix);
+  //   });
+  //   instancedMesh.instanceMatrix.needsUpdate = true;
+  // }
 
   TWEEN.update();
 
