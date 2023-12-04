@@ -4,7 +4,7 @@ import * as TWEEN from '@tweenjs/tween.js';
 import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
 import { stats } from './ui';
 
-let current = 0, total = 0;
+let current = 0, total = 0, toFollow = 0;
 let tween;
 let scrollPosition = 0;
 
@@ -27,18 +27,21 @@ const positions = [
     start: 8000,
     end: 12000,
     from: new THREE.Vector3(-1, 0, 0),
-    end: new THREE.Vector3(-1, 1, 0),
+    to: new THREE.Vector3(-1, 0, 1),
   }
 ];
 
 let pStart = new THREE.Vector3(0, 0, 0);
 let pEnd = new THREE.Vector3(0, 0, 0);
+let lastPosition = 0;
 
 function setParams(p) {
   for (let i = 0; i < positions.length; i++) {
     if (p >= positions[i].start && p < positions[i].end) {
-      pStart = positions[i].start;
-      pEnd = positions[i].end;
+      pStart = positions[i].from;
+      pEnd = positions[i].to;
+      toFollow = (((scrollPosition - positions[i].start) * (1 - 0)) / (positions[i].end - positions[i].start));
+      // if (lastPosition)
     }
   }
 }
@@ -53,32 +56,43 @@ window.addEventListener("scroll", (e) => {
 
   setParams(scrollPosition);
 
-  total = scrollPosition / scrollHeight;
+  // console.log("from " + pStart.x)
+  // console.log("to " + pEnd.x)
+
+  // total = scrollPosition / scrollHeight;
   
-  // total = (((scrollPosition - 10000) * (1 - 0)) / (20000 - 10000));
+  // console.log(current)
 
-  // let time = total > current ? total - current : current - total;
-  // time = time * 10000;
 
-  // if (time > 700) time = 1000;
+  let time = toFollow > current ? toFollow - current : current - toFollow;
+  time = time * 10000;
 
-  // tween = new TWEEN.Tween({ val: current })
-  //   .to({ val: total }, time)
-  //   .onUpdate(val => {
-  //     current = val.val;
-  //   });
-  // tween.start();
+
+  if (time > 700) time = 1000;
+
+  tween = new TWEEN.Tween({ val: current })
+    .to({ val: toFollow }, time)
+    .onUpdate(val => {
+      console.log(current)
+      current = val.val;
+    });
+  tween.start();
 
 });
 
 let scene = new THREE.Scene();
 let camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 0.1, 100);
-camera.position.set(2, -1.5, 3).setLength(3);
+camera.position.set(0, 2, 0);
 camera.lookAt(scene.position)
 let renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(innerWidth, innerHeight);
 renderer.domElement.id = 'app';
 document.body.appendChild(renderer.domElement);
+window.scrollTo(0, 0);
+const size = 5;
+const divisions = 10;
+const gridHelper = new THREE.GridHelper(size, divisions);
+scene.add(gridHelper);
 
 let light = new THREE.DirectionalLight(0xffffff, 0.5);
 light.position.setScalar(1);
@@ -126,12 +140,21 @@ instFinish = instSphereSmall;
 let geometry = new THREE.BoxGeometry(0.1, 0.1, 0.1);
 let material = new THREE.MeshStandardMaterial();
 let mesh = new THREE.Mesh(geometry, material);
-mesh.position.y = 0.8;
+mesh.position.set(0, 0, 0);
+mesh.rotation.set(0, 0, 0);
+mesh.updateMatrix();
 scene.add(mesh);
+
+let i = 0;
 
 renderer.setAnimationLoop(() => {
 
   stats.begin();
+
+  i += 1;
+  if (i%3===0) {
+    // console.log(current)
+  }
 
   // if (total !== current) {
   //   instObj.forEach((o, idx) => {
@@ -141,6 +164,8 @@ renderer.setAnimationLoop(() => {
   //   });
   //   instancedMesh.instanceMatrix.needsUpdate = true;
   // }
+
+  mesh.position.lerpVectors(pStart, pEnd, current);
 
   TWEEN.update();
 
