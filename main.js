@@ -38,25 +38,25 @@ let lastPosition = 0;
 function setParams(p) {
   for (let i = 0; i < positions.length; i++) {
     if (p >= positions[i].start && p < positions[i].end) {
-      pStart = positions[i].from;
-      pEnd = positions[i].to;
-      toFollow = (((scrollPosition - positions[i].start) * (1 - 0)) / (positions[i].end - positions[i].start));
       if (lastPosition < i) {
+        console.log(toFollow, current)
+        console.log(toFollow-current)
         current = 0;
         lastPosition = i;
-        console.log("se avanzo a la sig posicion")
-        console.log(lastPosition)
       } else if (lastPosition > i) {
         current = 1;
         lastPosition = i;
-        console.log("se avanzo a la anterior posicion")
-        console.log(lastPosition)
       }
+
+      pStart = positions[i].from;
+      pEnd = positions[i].to;
+      toFollow = 1;
+      // toFollow = (((scrollPosition - positions[i].start) * (1 - 0)) / (positions[i].end - positions[i].start));
     }
   }
 }
 
-window.addEventListener("scroll", (e) => {
+window.addEventListener("scrollend", (e) => {
 
   scrollPosition = document.documentElement.scrollTop;
 
@@ -65,14 +65,6 @@ window.addEventListener("scroll", (e) => {
   }
 
   setParams(scrollPosition);
-
-  // console.log("from " + pStart.x)
-  // console.log("to " + pEnd.x)
-
-  // total = scrollPosition / scrollHeight;
-  
-  // console.log(current)
-
 
   let time = toFollow > current ? toFollow - current : current - toFollow;
   time = time * 10000;
