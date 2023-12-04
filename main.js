@@ -41,7 +41,17 @@ function setParams(p) {
       pStart = positions[i].from;
       pEnd = positions[i].to;
       toFollow = (((scrollPosition - positions[i].start) * (1 - 0)) / (positions[i].end - positions[i].start));
-      // if (lastPosition)
+      if (lastPosition < i) {
+        current = 0;
+        lastPosition = i;
+        console.log("se avanzo a la sig posicion")
+        console.log(lastPosition)
+      } else if (lastPosition > i) {
+        current = 1;
+        lastPosition = i;
+        console.log("se avanzo a la anterior posicion")
+        console.log(lastPosition)
+      }
     }
   }
 }
@@ -73,7 +83,6 @@ window.addEventListener("scroll", (e) => {
   tween = new TWEEN.Tween({ val: current })
     .to({ val: toFollow }, time)
     .onUpdate(val => {
-      console.log(current)
       current = val.val;
     });
   tween.start();
