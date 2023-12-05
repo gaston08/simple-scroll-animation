@@ -13,7 +13,7 @@ let scrollHeight = document.documentElement.scrollHeight;
 const positions = [
   {
     start: 0,
-    end: 3000,
+    end: 4000,
     from: new THREE.Vector3(0, 0, 0),
     to: new THREE.Vector3(1, 0, 0)
   },
@@ -24,7 +24,7 @@ const positions = [
     to: new THREE.Vector3(-1, 0, 0)
   },
   {
-    start: 8000,
+    start: 7000,
     end: 12000,
     from: new THREE.Vector3(-1, 0, 0),
     to: new THREE.Vector3(-1, 0, 1),
@@ -50,8 +50,8 @@ function setParams(p) {
 
       pStart = positions[i].from;
       pEnd = positions[i].to;
-      toFollow = 1;
-      // toFollow = (((scrollPosition - positions[i].start) * (1 - 0)) / (positions[i].end - positions[i].start));
+      // toFollow = 1;
+      toFollow = (((scrollPosition - positions[i].start) * (1 - 0)) / (positions[i].end - positions[i].start));
     }
   }
 }
